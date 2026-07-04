@@ -1,83 +1,11 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>منصة فنيي المنازل الذكية · عمان</title>
-<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
-</head>
-<body style="margin:0; background:#04706C; font-family: Tahoma, Arial, sans-serif;">
-<div id="root">
-  <div style="color:#fff; padding:40px; text-align:center;">جاري تحميل التطبيق...</div>
-</div>
+import { useState, useEffect } from "react";
+import {
+  ShieldCheck, User, Wrench, MapPin, CheckCircle2, XCircle,
+  Radar, Plus, AlertCircle, Power, ArrowRight,
+  ClipboardList, Users, LogOut, BadgeCheck, Hourglass, Sparkles,
+  Lock, Trash2, Pencil, MessageCircle, Save, X
+} from "lucide-react";
 
-<script type="module">
-function showError(title, err) {
-  document.getElementById('root').innerHTML =
-    '<div style="color:#fff; padding:30px; direction:ltr; text-align:left; font-family: monospace; white-space: pre-wrap; font-size: 13px; line-height:1.6;">' +
-    '<h2 style="font-family: Tahoma, Arial, sans-serif; direction:rtl; text-align:right;">صار خطأ أثناء تحميل التطبيق</h2>' +
-    '<div>' + title + '</div><hr/><div>' + (err && err.stack ? err.stack : String(err)) + '</div></div>';
-  console.error(title, err);
-}
-
-try {
-  const React = (await import("https://esm.sh/react@18.3.1")).default;
-  const { useState, useEffect } = await import("https://esm.sh/react@18.3.1");
-  const ReactDOMClient = await import("https://esm.sh/react-dom@18.3.1/client");
-  const {
-    ShieldCheck, User, Wrench, MapPin, CheckCircle2, XCircle,
-    Radar, Plus, AlertCircle, Power, ArrowRight,
-    ClipboardList, Users, LogOut, BadgeCheck, Hourglass, Sparkles,
-    Trash2, Pencil, MessageCircle, Save, X
-  } = await import("https://esm.sh/lucide-react@0.383.0");
-  const { initializeApp } = await import("https://esm.sh/firebase@10.12.2/app");
-  const {
-    getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc
-  } = await import("https://esm.sh/firebase@10.12.2/firestore");
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyANhAwQBWqyzzyhqio3DPKZcLVb5MyisGg",
-    authDomain: "technical-oman-e7b37.firebaseapp.com",
-    databaseURL: "https://technical-oman-e7b37-default-rtdb.firebaseio.com",
-    projectId: "technical-oman-e7b37",
-    storageBucket: "technical-oman-e7b37.firebasestorage.app",
-    messagingSenderId: "730737125878",
-    appId: "1:730737125878:web:344ade923ed27ab6bdbfd7",
-    measurementId: "G-06QJ5CPCLV"
-  };
-  const fbApp = initializeApp(firebaseConfig);
-  const db = getFirestore(fbApp);
-
-  const jsxSource = document.getElementById('app-jsx').textContent;
-  const { code } = Babel.transform(jsxSource, { presets: ['react'] });
-
-  const factory = new Function(
-    'React','useState','useEffect',
-    'ShieldCheck','User','Wrench','MapPin','CheckCircle2','XCircle',
-    'Radar','Plus','AlertCircle','Power','ArrowRight',
-    'ClipboardList','Users','LogOut','BadgeCheck','Hourglass','Sparkles',
-    'Trash2','Pencil','MessageCircle','Save','X',
-    'db','collection','onSnapshot','addDoc','updateDoc','deleteDoc','doc',
-    code
-  );
-
-  const App = factory(
-    React, useState, useEffect,
-    ShieldCheck, User, Wrench, MapPin, CheckCircle2, XCircle,
-    Radar, Plus, AlertCircle, Power, ArrowRight,
-    ClipboardList, Users, LogOut, BadgeCheck, Hourglass, Sparkles,
-    Trash2, Pencil, MessageCircle, Save, X,
-    db, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc
-  );
-
-  const root = ReactDOMClient.createRoot(document.getElementById('root'));
-  root.render(React.createElement(App));
-} catch (err) {
-  showError('فشل تحميل أو تشغيل التطبيق', err);
-}
-</script>
-
-<script type="text/plain" id="app-jsx">
 const REGIONS = [
   "مسقط", "ظفار", "الباطنة شمال", "الباطنة جنوب", "الداخلية",
   "الشرقية شمال", "الشرقية جنوب", "الظاهرة", "البريمي", "مسندم", "الوسطى"
@@ -115,6 +43,26 @@ const COL_RED = "#F0A08D";
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "admin123";
+
+let uid = 0;
+const nextId = () => ++uid;
+
+async function loadShared(key, fallback) {
+  try {
+    const res = await window.storage.get(key, true);
+    if (res && res.value) return JSON.parse(res.value);
+    return fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+async function saveShared(key, value) {
+  try {
+    await window.storage.set(key, JSON.stringify(value), true);
+  } catch (e) {
+    console.error("storage error", e);
+  }
+}
 
 function overlap(a, b) {
   return a.some(x => b.includes(x));
@@ -302,95 +250,123 @@ function Emblem({ size = 34 }) {
   );
 }
 
-function colToArray(snapshot) {
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-}
-
-function App() {
+export default function SmartHomeOmanPlatform() {
   const [view, setView] = useState("landing");
   const [technicians, setTechnicians] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [loaded, setLoaded] = useState({ t: false, c: false, r: false });
+  const [loaded, setLoaded] = useState(false);
 
   const [customerSession, setCustomerSession] = useState(null);
   const [technicianSession, setTechnicianSession] = useState(null);
   const [adminIn, setAdminIn] = useState(false);
 
   useEffect(() => {
-    const unsubT = onSnapshot(collection(db, "technicians"), snap => {
-      setTechnicians(colToArray(snap));
-      setLoaded(l => ({ ...l, t: true }));
-    });
-    const unsubC = onSnapshot(collection(db, "customers"), snap => {
-      setCustomers(colToArray(snap));
-      setLoaded(l => ({ ...l, c: true }));
-    });
-    const unsubR = onSnapshot(collection(db, "requests"), snap => {
-      setRequests(colToArray(snap));
-      setLoaded(l => ({ ...l, r: true }));
-    });
-    return () => { unsubT(); unsubC(); unsubR(); };
+    (async () => {
+      const [t, c, r] = await Promise.all([
+        loadShared("technicians", []),
+        loadShared("customers", []),
+        loadShared("requests", [])
+      ]);
+      setTechnicians(t);
+      setCustomers(c);
+      setRequests(r);
+      const maxId = Math.max(0, ...t.map(x => x.id), ...c.map(x => x.id), ...r.map(x => x.id));
+      uid = maxId;
+      setLoaded(true);
+    })();
   }, []);
 
-  const isLoaded = loaded.t && loaded.c && loaded.r;
+  useEffect(() => {
+    if (!loaded) return;
+    const interval = setInterval(async () => {
+      const [t, c, r] = await Promise.all([
+        loadShared("technicians", technicians),
+        loadShared("customers", customers),
+        loadShared("requests", requests)
+      ]);
+      setTechnicians(t);
+      setCustomers(c);
+      setRequests(r);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [loaded]);
+
+  function setTechniciansPersist(next) {
+    setTechnicians(next);
+    saveShared("technicians", next);
+  }
+  function setCustomersPersist(next) {
+    setCustomers(next);
+    saveShared("customers", next);
+  }
+  function setRequestsPersist(next) {
+    setRequests(next);
+    saveShared("requests", next);
+  }
+
   const approvedTechs = technicians.filter(t => t.status === "approved");
 
-  function autoMatch(req, techList) {
-    const pool = techList.filter(t =>
+  function autoMatch(req) {
+    const pool = technicians.filter(t =>
       t.status === "approved" && t.available &&
       t.region === req.region && overlap(t.specialties, req.specialties)
     );
     return pool[0] || null;
   }
 
-  async function submitRequest(data) {
-    const docRef = await addDoc(collection(db, "requests"), {
-      ...data, status: "جديد", assignedTech: null, createdAt: new Date().toISOString()
-    });
-    setTimeout(async () => {
-      const tech = autoMatch({ ...data }, technicians);
-      if (tech) {
-        await updateDoc(doc(db, "requests", docRef.id), { status: "قيد المعالجة", assignedTech: tech.name });
-      }
+  function submitRequest(data) {
+    const req = { ...data, id: nextId(), status: "جديد", assignedTech: null, createdAt: "الآن" };
+    const next = [req, ...requests];
+    setRequestsPersist(next);
+    setTimeout(() => {
+      setRequests(prevState => {
+        const updated = prevState.map(r => {
+          if (r.id !== req.id) return r;
+          const tech = autoMatch(r);
+          return tech ? { ...r, status: "قيد المعالجة", assignedTech: tech.name } : r;
+        });
+        saveShared("requests", updated);
+        return updated;
+      });
     }, 1400);
-    return docRef.id;
+    return req.id;
   }
 
   function claimRequest(reqId, techName) {
-    updateDoc(doc(db, "requests", reqId), { status: "قيد المعالجة", assignedTech: techName });
+    const next = requests.map(r => r.id === reqId ? { ...r, status: "قيد المعالجة", assignedTech: techName } : r);
+    setRequestsPersist(next);
   }
   function resolveRequest(reqId) {
-    updateDoc(doc(db, "requests", reqId), { status: "تم الحل" });
+    const next = requests.map(r => r.id === reqId ? { ...r, status: "تم الحل" } : r);
+    setRequestsPersist(next);
   }
   function approveTech(id) {
-    updateDoc(doc(db, "technicians", id), { status: "approved" });
+    setTechniciansPersist(technicians.map(t => t.id === id ? { ...t, status: "approved" } : t));
   }
   function rejectTech(id) {
-    updateDoc(doc(db, "technicians", id), { status: "rejected" });
+    setTechniciansPersist(technicians.map(t => t.id === id ? { ...t, status: "rejected" } : t));
   }
-  function toggleAvailable(id, current) {
-    updateDoc(doc(db, "technicians", id), { available: !current });
+  function toggleAvailable(id) {
+    setTechniciansPersist(technicians.map(t => t.id === id ? { ...t, available: !t.available } : t));
   }
   function updateTechnician(id, patch) {
-    updateDoc(doc(db, "technicians", id), patch);
+    setTechniciansPersist(technicians.map(t => t.id === id ? { ...t, ...patch } : t));
   }
   function deleteTechnician(id) {
-    deleteDoc(doc(db, "technicians", id));
+    setTechniciansPersist(technicians.filter(t => t.id !== id));
   }
   function updateCustomer(id, patch) {
-    updateDoc(doc(db, "customers", id), patch);
+    setCustomersPersist(customers.map(c => c.id === id ? { ...c, ...patch } : c));
   }
   function deleteCustomer(id) {
-    deleteDoc(doc(db, "customers", id));
+    setCustomersPersist(customers.filter(c => c.id !== id));
   }
-  async function addCustomer(c) {
-    const docRef = await addDoc(collection(db, "customers"), c);
-    return { id: docRef.id, ...c };
+  function addCustomer(c) {
+    setCustomersPersist([...customers, c]);
   }
-  async function addTechnician(t) {
-    const docRef = await addDoc(collection(db, "technicians"), t);
-    return { id: docRef.id, ...t };
+  function addTechnician(t) {
+    setTechniciansPersist([...technicians, t]);
   }
 
   const shell = {
@@ -437,19 +413,19 @@ function App() {
       </div>
 
       <div style={{ padding: 22 }}>
-        {!isLoaded && (
+        {!loaded && (
           <div style={{ textAlign: "center", padding: "60px 10px", color: COL_MUTED, fontSize: 14 }}>
             جاري تحميل البيانات...
           </div>
         )}
-        {isLoaded && view === "landing" && (
+        {loaded && view === "landing" && (
           <LandingView onPick={setView} />
         )}
 
-        {isLoaded && view === "admin" && !adminIn && (
+        {view === "admin" && !adminIn && (
           <AdminLogin onSuccess={() => setAdminIn(true)} />
         )}
-        {isLoaded && view === "admin" && adminIn && (
+        {view === "admin" && adminIn && (
           <AdminDashboard
             technicians={technicians} customers={customers} requests={requests}
             approveTech={approveTech} rejectTech={rejectTech}
@@ -458,10 +434,10 @@ function App() {
           />
         )}
 
-        {isLoaded && view === "customer" && !customerSession && (
+        {view === "customer" && !customerSession && (
           <CustomerAuth customers={customers} addCustomer={addCustomer} onLogin={setCustomerSession} />
         )}
-        {isLoaded && view === "customer" && customerSession && (
+        {view === "customer" && customerSession && (
           <CustomerPortal
             customer={customers.find(c => c.id === customerSession.id) || customerSession}
             requests={requests.filter(r => r.phone === customerSession.phone)}
@@ -469,10 +445,10 @@ function App() {
           />
         )}
 
-        {isLoaded && view === "technician" && !technicianSession && (
+        {view === "technician" && !technicianSession && (
           <TechnicianAuth technicians={technicians} addTechnician={addTechnician} onLogin={setTechnicianSession} />
         )}
-        {isLoaded && view === "technician" && technicianSession && (
+        {view === "technician" && technicianSession && (
           <TechnicianPortal
             tech={technicians.find(t => t.id === technicianSession.id) || technicianSession}
             requests={requests}
@@ -884,10 +860,10 @@ function CustomerAuth({ customers, addCustomer, onLogin }) {
     else setErr(true);
   }
 
-  async function register() {
-    const c = { name, phone, password: newPassword, region, wilayat };
-    const created = await addCustomer(c);
-    onLogin(created);
+  function register() {
+    const c = { id: nextId(), name, phone, password: newPassword, region, wilayat };
+    addCustomer(c);
+    onLogin(c);
   }
 
   return (
@@ -951,9 +927,9 @@ function CustomerPortal({ customer, requests, submitRequest }) {
     setSpecialties(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
   }
 
-  async function handleSubmit() {
+  function handleSubmit() {
     if (!problem.trim() || specialties.length === 0) return;
-    const id = await submitRequest({
+    const id = submitRequest({
       customerName: customer.name, phone: customer.phone, region: customer.region,
       wilayat, specialties, problem, urgent
     });
@@ -1071,10 +1047,10 @@ function TechnicianAuth({ technicians, addTechnician, onLogin }) {
     else setErr(true);
   }
 
-  async function register() {
-    const t = { name, phone, password: newPassword, region, wilayat, specialties, status: "pending", available: true };
-    const created = await addTechnician(t);
-    onLogin(created);
+  function register() {
+    const t = { id: nextId(), name, phone, password: newPassword, region, wilayat, specialties, status: "pending", available: true };
+    addTechnician(t);
+    onLogin(t);
   }
 
   return (
@@ -1153,7 +1129,7 @@ function TechnicianPortal({ tech, requests, claimRequest, resolveRequest, toggle
           <div className="amh-title" style={{ fontWeight: 800, fontSize: 17 }}>مرحبًا، {tech.name}</div>
           <div style={{ fontSize: 12.5, color: COL_MUTED, marginTop: 4 }}>{tech.region} · {tech.specialties.join("، ")}</div>
         </div>
-        <GhostButton tone={tech.available ? "green" : "sand"} onClick={() => toggleAvailable(tech.id, tech.available)}>
+        <GhostButton tone={tech.available ? "green" : "sand"} onClick={() => toggleAvailable(tech.id)}>
           <Power size={14} /> {tech.available ? "متاح الآن" : "غير متاح"}
         </GhostButton>
       </div>
@@ -1207,8 +1183,3 @@ function TechnicianPortal({ tech, requests, claimRequest, resolveRequest, toggle
     </div>
   );
 }
-
-return App;
-</script>
-</body>
-</html>
