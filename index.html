@@ -6,61 +6,75 @@
 <title>منصة فنيي المنازل الذكية · عمان</title>
 <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
 </head>
-<body style="margin:0; background:#04706C;">
-<div id="root"></div>
+<body style="margin:0; background:#04706C; font-family: Tahoma, Arial, sans-serif;">
+<div id="root">
+  <div style="color:#fff; padding:40px; text-align:center;">جاري تحميل التطبيق...</div>
+</div>
 
 <script type="module">
-import React from "https://esm.sh/react@18.3.1";
-import { useState, useEffect } from "https://esm.sh/react@18.3.1";
-import * as ReactDOMClient from "https://esm.sh/react-dom@18.3.1/client";
-import {
-  ShieldCheck, User, Wrench, MapPin, CheckCircle2, XCircle,
-  Radar, Plus, AlertCircle, Power, ArrowRight,
-  ClipboardList, Users, LogOut, BadgeCheck, Hourglass, Sparkles,
-  Trash2, Pencil, MessageCircle, Save, X
-} from "https://esm.sh/lucide-react@0.383.0?deps=react@18.3.1";
-import { initializeApp } from "https://esm.sh/firebase@10.12.2/app";
-import {
-  getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc
-} from "https://esm.sh/firebase@10.12.2/firestore";
+function showError(title, err) {
+  document.getElementById('root').innerHTML =
+    '<div style="color:#fff; padding:30px; direction:ltr; text-align:left; font-family: monospace; white-space: pre-wrap; font-size: 13px; line-height:1.6;">' +
+    '<h2 style="font-family: Tahoma, Arial, sans-serif; direction:rtl; text-align:right;">صار خطأ أثناء تحميل التطبيق</h2>' +
+    '<div>' + title + '</div><hr/><div>' + (err && err.stack ? err.stack : String(err)) + '</div></div>';
+  console.error(title, err);
+}
 
-const firebaseConfig = {
-  apiKey: "AIzaSyANhAwQBWqyzzyhqio3DPKZcLVb5MyisGg",
-  authDomain: "technical-oman-e7b37.firebaseapp.com",
-  databaseURL: "https://technical-oman-e7b37-default-rtdb.firebaseio.com",
-  projectId: "technical-oman-e7b37",
-  storageBucket: "technical-oman-e7b37.firebasestorage.app",
-  messagingSenderId: "730737125878",
-  appId: "1:730737125878:web:344ade923ed27ab6bdbfd7",
-  measurementId: "G-06QJ5CPCLV"
-};
-const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
+try {
+  const React = (await import("https://esm.sh/react@18.3.1")).default;
+  const { useState, useEffect } = await import("https://esm.sh/react@18.3.1");
+  const ReactDOMClient = await import("https://esm.sh/react-dom@18.3.1/client");
+  const {
+    ShieldCheck, User, Wrench, MapPin, CheckCircle2, XCircle,
+    Radar, Plus, AlertCircle, Power, ArrowRight,
+    ClipboardList, Users, LogOut, BadgeCheck, Hourglass, Sparkles,
+    Trash2, Pencil, MessageCircle, Save, X
+  } = await import("https://esm.sh/lucide-react@0.383.0");
+  const { initializeApp } = await import("https://esm.sh/firebase@10.12.2/app");
+  const {
+    getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc
+  } = await import("https://esm.sh/firebase@10.12.2/firestore");
 
-const jsxSource = document.getElementById('app-jsx').textContent;
-const { code } = Babel.transform(jsxSource, { presets: ['react'] });
+  const firebaseConfig = {
+    apiKey: "AIzaSyANhAwQBWqyzzyhqio3DPKZcLVb5MyisGg",
+    authDomain: "technical-oman-e7b37.firebaseapp.com",
+    databaseURL: "https://technical-oman-e7b37-default-rtdb.firebaseio.com",
+    projectId: "technical-oman-e7b37",
+    storageBucket: "technical-oman-e7b37.firebasestorage.app",
+    messagingSenderId: "730737125878",
+    appId: "1:730737125878:web:344ade923ed27ab6bdbfd7",
+    measurementId: "G-06QJ5CPCLV"
+  };
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getFirestore(fbApp);
 
-const factory = new Function(
-  'React','useState','useEffect',
-  'ShieldCheck','User','Wrench','MapPin','CheckCircle2','XCircle',
-  'Radar','Plus','AlertCircle','Power','ArrowRight',
-  'ClipboardList','Users','LogOut','BadgeCheck','Hourglass','Sparkles',
-  'Trash2','Pencil','MessageCircle','Save','X',
-  'db','collection','onSnapshot','addDoc','updateDoc','deleteDoc','doc',
-  code
-);
+  const jsxSource = document.getElementById('app-jsx').textContent;
+  const { code } = Babel.transform(jsxSource, { presets: ['react'] });
 
-const App = factory(
-  React, useState, useEffect,
-  ShieldCheck, User, Wrench, MapPin, CheckCircle2, XCircle,
-  Radar, Plus, AlertCircle, Power, ArrowRight,
-  ClipboardList, Users, LogOut, BadgeCheck, Hourglass, Sparkles,
-  Trash2, Pencil, MessageCircle, Save, X,
-  db, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc
-);
+  const factory = new Function(
+    'React','useState','useEffect',
+    'ShieldCheck','User','Wrench','MapPin','CheckCircle2','XCircle',
+    'Radar','Plus','AlertCircle','Power','ArrowRight',
+    'ClipboardList','Users','LogOut','BadgeCheck','Hourglass','Sparkles',
+    'Trash2','Pencil','MessageCircle','Save','X',
+    'db','collection','onSnapshot','addDoc','updateDoc','deleteDoc','doc',
+    code
+  );
 
-const root = ReactDOMClient.createRoot(document.getElementById('root'));
-root.render(React.createElement(App));
+  const App = factory(
+    React, useState, useEffect,
+    ShieldCheck, User, Wrench, MapPin, CheckCircle2, XCircle,
+    Radar, Plus, AlertCircle, Power, ArrowRight,
+    ClipboardList, Users, LogOut, BadgeCheck, Hourglass, Sparkles,
+    Trash2, Pencil, MessageCircle, Save, X,
+    db, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc
+  );
+
+  const root = ReactDOMClient.createRoot(document.getElementById('root'));
+  root.render(React.createElement(App));
+} catch (err) {
+  showError('فشل تحميل أو تشغيل التطبيق', err);
+}
 </script>
 
 <script type="text/plain" id="app-jsx">
